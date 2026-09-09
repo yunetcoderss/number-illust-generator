@@ -680,7 +680,7 @@ export default function App() {
         {/* ===== BOTTOM: Paste & Download Button (floating inside photo) ===== */}
         <div className={`absolute bottom-0 left-0 right-0 z-[100] p-3 sm:p-4 pb-[calc(10px+env(safe-area-inset-bottom,0px))] bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-all duration-300 ${(btnState === 'done') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
           <div className="flex flex-col gap-2 pointer-events-auto">
-            {btnState === 'done' && !orderCode && (
+            {btnState === 'done' && !orderCode && !window.location.pathname.startsWith('/unduh/') && (
               <button
                 onClick={handleConfirmOrder}
                 disabled={isConfirming}
@@ -690,7 +690,15 @@ export default function App() {
                 {isConfirming ? 'Mengirim Pesanan...' : 'Konfirmasi Pesanan'}
               </button>
             )}
-            {btnState === 'done' && orderCode && (
+            {btnState === 'done' && orderCode && !window.location.pathname.startsWith('/unduh/') && (
+              <button
+                onClick={() => setShowOrderModal(true)}
+                className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#10B981] to-[#047857] shadow-none hover:brightness-110"
+              >
+                Lihat Kode Pesanan
+              </button>
+            )}
+            {btnState === 'done' && orderCode && window.location.pathname.startsWith('/unduh/') && (
               <button
                 onClick={downloadFiles}
                 className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] shadow-none hover:brightness-110"
