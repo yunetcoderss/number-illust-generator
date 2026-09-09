@@ -1,0 +1,10 @@
+const fs = require('fs');
+const glb = fs.readFileSync('./public/frame.glb');
+const magic = glb.readUInt32LE(0);
+const version = glb.readUInt32LE(4);
+const length = glb.readUInt32LE(8);
+const chunkLength = glb.readUInt32LE(12);
+const chunkType = glb.readUInt32LE(16);
+const jsonChunk = glb.slice(20, 20 + chunkLength).toString('utf-8');
+const json = JSON.parse(jsonChunk);
+console.log(JSON.stringify(json, null, 2));
