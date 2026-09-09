@@ -416,7 +416,6 @@ export default function App() {
         }
       );
 
-      setCustomPhoto(result.colored);
       setColoredPhoto(result.colored);
       setGuidePhoto(result.guide);
       setLineartPhoto(result.lineart);
@@ -459,14 +458,11 @@ export default function App() {
               }}
             >
               <div 
-                className="relative transition-transform duration-75 touch-none"
+                className="relative transition-transform duration-75 touch-none flex"
                 style={{ 
                   transform: `scale(${zoomLevel}) translate(${panOffset.x / zoomLevel}px, ${panOffset.y / zoomLevel}px)`,
-                  aspectRatio: isPortrait ? '1748/2480' : '2480/1748',
                   maxWidth: '100%',
                   maxHeight: '100%',
-                  height: isPortrait ? '100%' : 'auto',
-                  width: isPortrait ? 'auto' : '100%',
                   cursor: activeTool === 'brush' ? 'crosshair' : 'grab'
                 }}
                 onPointerDown={handlePointerDown}
@@ -476,7 +472,8 @@ export default function App() {
               >
                 <img 
                   src={customPhoto} 
-                  className="absolute inset-0 w-full h-full pointer-events-none" 
+                  className="max-w-full max-h-full object-contain pointer-events-none block" 
+                  style={{ aspectRatio: isPortrait ? '1748/2480' : '2480/1748' }}
                   draggable={false}
                   onLoad={(e) => {
                     const imgEl = e.currentTarget;
