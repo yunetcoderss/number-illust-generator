@@ -59,10 +59,21 @@ export async function processImageToLineart(
     const data = combinedImgData.data;
     for (let i = 0; i < data.length; i += 4) {
         const isDetailed = maskData && maskData[i + 3] > 10;
-        const source = isDetailed ? sharpData : blurredData;
-        data[i] = source[i];
-        data[i+1] = source[i+1];
-        data[i+2] = source[i+2];
+        
+        if (isDetailed) {
+            // Lift shadows (gamma correction) for brushed areas to prevent dark face details 
+            // from merging with unbrushed black hair/backgrounds during K-Means
+            const r = sharpData[i];
+            const g = sharpData[i+1];
+            const b = sharpData[i+2];
+            data[i] = Math.pow(r / 255, 0.7) * 255;
+            data[i+1] = Math.pow(g / 255, 0.7) * 255;
+            data[i+2] = Math.pow(b / 255, 0.7) * 255;
+        } else {
+            data[i] = blurredData[i];
+            data[i+1] = blurredData[i+1];
+            data[i+2] = blurredData[i+2];
+        }
         data[i+3] = 255;
     }
     
@@ -77,8 +88,26 @@ export async function processImageToLineart(
         const sampleStep = Math.max(4, Math.floor((data.length / 4) / 5000) * 4); // Sample ~5000 pixels
         let centroids: number[][] = [];
         
+        // Find all brushed pixels to prioritize them
+        const brushedIndices: number[] = [];
+        if (maskData) {
+            for (let i = 0; i < data.length; i += 4) {
+                if (maskData[i + 3] > 10) brushedIndices.push(i);
+            }
+        }
+        
         for (let i = 0; i < colorCount; i++) {
-            const idx = Math.floor(Math.random() * (data.length / 4)) * 4;
+            let idx;
+            if (brushedIndices.length > 100) {
+                // If brush was used, pick 4 out of 6 colors strictly from the brushed area to preserve face details
+                if (i < 4) {
+                    idx = brushedIndices[Math.floor(Math.random() * brushedIndices.length)];
+                } else {
+                    idx = Math.floor(Math.random() * (data.length / 4)) * 4;
+                }
+            } else {
+                idx = Math.floor(Math.random() * (data.length / 4)) * 4;
+            }
             centroids.push([data[idx], data[idx+1], data[idx+2]]);
         }
         
@@ -96,10 +125,14 @@ export async function processImageToLineart(
                     const dist = dr*dr + dg*dg + db*db;
                     if (dist < minDist) { minDist = dist; bestIdx = j; }
                 }
-                clusters[bestIdx].r += r;
-                clusters[bestIdx].g += g;
-                clusters[bestIdx].b += b;
-                clusters[bestIdx].count++;
+                
+                // Heavily weight brushed pixels (50x) so K-Means clusters gravitate towards face details
+                const weight = (maskData && maskData[i + 3] > 10) ? 50 : 1;
+                
+                clusters[bestIdx].r += r * weight;
+                clusters[bestIdx].g += g * weight;
+                clusters[bestIdx].b += b * weight;
+                clusters[bestIdx].count += weight;
             }
             
             let changed = false;
@@ -360,7 +393,7 @@ export async function processImageToLineart(
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, INNER_W, INNER_H);
     
-    ctx.strokeStyle = '#000000';
+    ctx.strokeStyle = '#E7A56B';
     ctx.lineWidth = 1.2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -378,6 +411,7 @@ export async function processImageToLineart(
                 ctx.lineTo(x + 1, y + 1);
                 ops++;
             }
+            
             // Check bottom neighbor
             if (cleanMap[idx + INNER_W] !== c) {
                 ctx.moveTo(x, y + 1);
@@ -398,7 +432,7 @@ export async function processImageToLineart(
     onProgress(85, 'Menulis nomor warna...');
     await yieldToMain();
     
-    ctx.fillStyle = '#222';
+    ctx.fillStyle = '#EC9A61';
     ctx.font = 'bold 22px "Plus Jakarta Sans", Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -449,16 +483,48 @@ export async function processImageToLineart(
             
             // Adjust threshold for A5 resolution
             if (count > 500) {
-                let textX = Math.floor(sumX / count);
-                let textY = Math.floor(sumY / count);
+                const centerOfMassX = Math.floor(sumX / count);
+                const centerOfMassY = Math.floor(sumY / count);
                 
-                if (cleanMap[textY * INNER_W + textX] !== colorIdx) {
-                    const midPixel = queue[Math.floor(qTail / 2)];
-                    textX = midPixel % INNER_W;
-                    textY = Math.floor(midPixel / INNER_W);
+                const candidates = [
+                    { x: centerOfMassX, y: centerOfMassY },
+                    { x: queue[Math.floor(qTail * 0.25)] % INNER_W, y: Math.floor(queue[Math.floor(qTail * 0.25)] / INNER_W) },
+                    { x: queue[Math.floor(qTail * 0.50)] % INNER_W, y: Math.floor(queue[Math.floor(qTail * 0.50)] / INNER_W) },
+                    { x: queue[Math.floor(qTail * 0.75)] % INNER_W, y: Math.floor(queue[Math.floor(qTail * 0.75)] / INNER_W) }
+                ];
+                
+                let bestX = centerOfMassX;
+                let bestY = centerOfMassY;
+                let maxClearance = -1;
+                
+                for (const c of candidates) {
+                    if (c.x < 0 || c.x >= INNER_W || c.y < 0 || c.y >= INNER_H) continue;
+                    if (cleanMap[c.y * INNER_W + c.x] !== colorIdx) continue;
+                    
+                    let clearance = 1;
+                    let hit = false;
+                    while (clearance < 100 && !hit) {
+                        const steps = 8;
+                        for (let s = 0; s < steps; s++) {
+                            const angle = (s / steps) * Math.PI * 2;
+                            const nx = Math.round(c.x + Math.cos(angle) * clearance);
+                            const ny = Math.round(c.y + Math.sin(angle) * clearance);
+                            if (nx < 0 || nx >= INNER_W || ny < 0 || ny >= INNER_H || cleanMap[ny * INNER_W + nx] !== colorIdx) {
+                                hit = true;
+                                break;
+                            }
+                        }
+                        if (!hit) clearance += 3; // jump by 3 pixels to speed up calculation
+                    }
+                    
+                    if (clearance > maxClearance) {
+                        maxClearance = clearance;
+                        bestX = c.x;
+                        bestY = c.y;
+                    }
                 }
                 
-                ctx.fillText((colorIdx + 1).toString(), textX, textY);
+                ctx.fillText((colorIdx + 1).toString(), bestX, bestY);
             }
         }
     }

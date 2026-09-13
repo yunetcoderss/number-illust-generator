@@ -278,6 +278,10 @@ export default function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     
+    if (window.location.pathname.startsWith('/unduh/')) {
+      window.history.pushState({}, '', '/');
+    }
+    
     setGenerating(false);
     setBtnState('idle');
     setColoredPhoto(null);
@@ -338,27 +342,8 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
-  const downloadFiles = () => {
-    if (guidePhoto && lineartPhoto) {
-      if (guidePhoto.startsWith('http')) {
-        showToast('Membuka 2 tab baru untuk mengunduh...');
-        window.open(lineartPhoto, '_blank');
-        window.open(guidePhoto, '_blank');
-      } else {
-        const a = document.createElement('a');
-        a.href = lineartPhoto;
-        a.download = 'vektor-lineart.jpg';
-        a.click();
-        
-        setTimeout(() => {
-          const b = document.createElement('a');
-          b.href = guidePhoto;
-          b.download = 'petunjuk-pewarnaan.jpg';
-          b.click();
-          showToast('2 File (Petunjuk & Lineart) diunduh!');
-        }, 500);
-      }
-    } else if (guidePhoto) {
+  const downloadGuide = () => {
+    if (guidePhoto) {
       if (guidePhoto.startsWith('http')) {
         showToast('Membuka gambar petunjuk untuk disimpan...');
         window.open(guidePhoto, '_blank');
@@ -367,6 +352,22 @@ export default function App() {
         a.href = guidePhoto;
         a.download = 'petunjuk-pewarnaan.jpg';
         a.click();
+        showToast('Petunjuk Pewarnaan diunduh!');
+      }
+    }
+  };
+
+  const downloadLineart = () => {
+    if (lineartPhoto) {
+      if (lineartPhoto.startsWith('http')) {
+        showToast('Membuka gambar lineart untuk disimpan...');
+        window.open(lineartPhoto, '_blank');
+      } else {
+        const a = document.createElement('a');
+        a.href = lineartPhoto;
+        a.download = 'vektor-lineart.jpg';
+        a.click();
+        showToast('Vektor Lineart diunduh!');
       }
     }
   };
@@ -546,17 +547,17 @@ export default function App() {
         {/* ===== RIGHT: Action Buttons (floating vertical, inside photo) ===== */}
         <div className="absolute right-1.5 sm:right-3 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-1.5 sm:gap-2.5 items-end pointer-events-none">
 
-          {!customPhoto && (
-            <label
-              title="Unggah / Ganti Foto"
-              className="group relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/15 flex items-center justify-center text-white cursor-pointer transition-all duration-150 active:scale-90 hover:bg-black/60 pointer-events-auto"
-            >
-              <ImagePlus size={18} strokeWidth={2} />
-              {/* Keep this file input attached to the floating button, but we also have the hidden one in root */}
-              <input type="file" className="hidden" accept="image/*" onChange={uploadPhoto} />
-              <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">Unggah Foto</div>
-            </label>
-          )}
+          <label
+            title="Unggah / Ganti Foto"
+            className="group relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/15 flex items-center justify-center text-white cursor-pointer transition-all duration-150 active:scale-90 hover:bg-black/60 pointer-events-auto"
+          >
+            <ImagePlus size={18} strokeWidth={2} />
+            {/* Keep this file input attached to the floating button, but we also have the hidden one in root */}
+            <input type="file" className="hidden" accept="image/*" onChange={uploadPhoto} />
+            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+              {customPhoto ? 'Ganti Foto' : 'Unggah Foto'}
+            </div>
+          </label>
 
           {/* Brush Tool Group */}
           {customPhoto && (
@@ -698,14 +699,25 @@ export default function App() {
                 Lihat Kode Pesanan
               </button>
             )}
-            {btnState === 'done' && orderCode && window.location.pathname.startsWith('/unduh/') && (
-              <button
-                onClick={downloadFiles}
-                className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] shadow-none hover:brightness-110"
-              >
-                <Download size={18} strokeWidth={2.5} />
-                {lineartPhoto ? 'Unduh 2 File (Petunjuk & Lineart)' : 'Unduh Petunjuk Pewarnaan'}
-              </button>
+            {btnState === 'done' && (
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={downloadGuide}
+                  className={`flex-1 relative rounded-xl py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 ${window.location.pathname.startsWith('/unduh/') ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]' : 'bg-white/20 hover:bg-white/30 border border-white/20'}`}
+                >
+                  <Download size={18} strokeWidth={2.5} />
+                  Unduh Guide
+                </button>
+                {lineartPhoto && (
+                  <button
+                    onClick={downloadLineart}
+                    className={`flex-1 relative rounded-xl py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 ${window.location.pathname.startsWith('/unduh/') ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]' : 'bg-white/20 hover:bg-white/30 border border-white/20'}`}
+                  >
+                    <Download size={18} strokeWidth={2.5} />
+                    Unduh Lineart
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
