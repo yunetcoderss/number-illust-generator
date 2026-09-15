@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 
 const GUIDE_TEXT = "Halo! Selamat datang di Toko Cia. Yuk, unggah fotomu, seleksi detail wajah dan pilih palet warna yang kamu suka. Setelah itu klik konfirmasi pesanan apabila sudah sesuai.";
 
-export default function GuideCard({ startTyping }: { startTyping: boolean }) {
+export default function GuideCard({ startTyping, isVisible }: { startTyping: boolean, isVisible: boolean }) {
   const [displayedText, setDisplayedText] = useState("");
-  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     if (!startTyping) return;
@@ -17,27 +16,6 @@ export default function GuideCard({ startTyping }: { startTyping: boolean }) {
     }, 50);
     
     return () => clearInterval(interval);
-  }, [startTyping]);
-
-  useEffect(() => {
-    if (!startTyping) return;
-
-    const handleInteraction = () => {
-      setIsVisible(false);
-    };
-    
-    const timer = setTimeout(() => {
-      window.addEventListener('pointerdown', handleInteraction, { once: true });
-      window.addEventListener('keydown', handleInteraction, { once: true });
-      window.addEventListener('wheel', handleInteraction, { once: true });
-    }, 1500);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('pointerdown', handleInteraction);
-      window.removeEventListener('keydown', handleInteraction);
-      window.removeEventListener('wheel', handleInteraction);
-    };
   }, [startTyping]);
 
   if (!isVisible) return null;

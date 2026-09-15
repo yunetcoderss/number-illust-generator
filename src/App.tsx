@@ -54,6 +54,7 @@ export default function App() {
   const [generating, setGenerating] = useState(false);
   const [btnState, setBtnState] = useState<'idle' | 'busy' | 'done'>('idle');
   const [is3DLoaded, setIs3DLoaded] = useState(false);
+  const [showGuide, setShowGuide] = useState(true);
   const [loadingPct, setLoadingPct] = useState(0);
   const [loadingText, setLoadingText] = useState('Menggambar vektor...');
 
@@ -138,6 +139,7 @@ export default function App() {
   };
 
   const handleThemeSelect = async (name: string) => {
+    setShowGuide(false);
     setActiveTheme(name);
     setHasSelectedTheme(true);
     showToast(`Tema "${name}" dipilih`);
@@ -147,6 +149,7 @@ export default function App() {
   };
 
   const toggleBrush = () => {
+    setShowGuide(false);
     if (coloredPhoto) {
       setColoredPhoto(null);
       setLineartPhoto(null);
@@ -279,6 +282,7 @@ export default function App() {
   const uploadPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setShowGuide(false);
     
     if (window.location.pathname.startsWith('/unduh/')) {
       window.history.pushState({}, '', '/');
@@ -375,6 +379,7 @@ export default function App() {
   };
 
   const handleConfirmOrder = async () => {
+    setShowGuide(false);
     if (!guidePhoto || !lineartPhoto) return;
     setIsConfirming(true);
     showToast('Sedang mengirim pesanan ke Cloud...');
@@ -502,15 +507,17 @@ export default function App() {
           <div className={`transition-opacity duration-300 ${btnState === 'busy' || !is3DLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           {/* ===== TOP: Logo Bar (floating inside photo) ===== */}
           <div className="absolute top-0 left-0 right-0 z-30 p-3 sm:p-4 flex items-center justify-between pointer-events-none">
-            <div className="flex items-center pointer-events-auto">
-              <img src="/toko-cia-white.png" alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 flex-none drop-shadow-lg object-contain" />
-            </div>
-            
-            {orderCode && (
+            {orderCode ? (
               <div className="flex items-center gap-2 bg-[#5A3D2B] text-white text-xs font-bold py-1.5 px-3 rounded-full pointer-events-auto shadow-[0_0_15px_rgba(139,92,246,0.5)]">
                 <span className="opacity-80">Pesanan:</span> {orderCode}
               </div>
+            ) : (
+              <div></div>
             )}
+
+            <div className="flex items-center pointer-events-auto">
+              <img src="/toko-cia-white.png" alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 flex-none drop-shadow-lg object-contain" />
+            </div>
           </div>
 
         {/* ===== LEFT: Icon Theme Selector (floating vertical, inside photo) ===== */}
@@ -727,7 +734,7 @@ export default function App() {
           </div>
       </div>
         
-        <GuideCard startTyping={is3DLoaded} />
+        <GuideCard startTyping={is3DLoaded} isVisible={showGuide} />
 
       </div>
 
