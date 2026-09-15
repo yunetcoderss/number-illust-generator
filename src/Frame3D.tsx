@@ -76,6 +76,10 @@ const FrameModel = ({ imageUrl, onFrameClick }: FrameProps) => {
       (tex) => {
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.flipY = flipY;
+        tex.anisotropy = 16;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
         tex.needsUpdate = true;
         
         const a5Aspect = 148 / 210;
@@ -146,7 +150,7 @@ export default function Frame3D({ imageUrl, onFrameClick, onLoaded }: FrameProps
   return (
     <div className="w-full h-full cursor-grab active:cursor-grabbing pointer-events-auto" style={{ touchAction: 'none' }}>
       <Canvas 
-        dpr={1} 
+        dpr={[1, 2]} 
         performance={{ min: 0.5 }}
         camera={{ position: [0, 0, 8], fov: 45 }} 
         style={{ touchAction: 'none' }}

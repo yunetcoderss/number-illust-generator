@@ -5,12 +5,12 @@ import Frame3D from './Frame3D';
 import GuideCard from './GuideCard';
 
 const themes = [
-  { name: 'Natural', icon: User, bg: 'linear-gradient(135deg,#D3AC97,#99654C)', colors: [[36, 17, 10], [105, 41, 28], [179, 99, 71], [227, 155, 118], [255, 213, 186], [255, 246, 240]] },
-  { name: 'Sinematik', icon: Camera, bg: 'linear-gradient(135deg,#8D9FA8,#A8634B)', colors: [[10, 25, 47], [35, 78, 112], [166, 88, 88], [224, 143, 98], [252, 206, 154], [250, 244, 237]] },
-  { name: 'Monokrom', icon: Moon, bg: 'linear-gradient(135deg,#999999,#4D4D4D)', colors: [[20, 20, 22], [65, 65, 70], [120, 120, 125], [175, 175, 180], [225, 225, 230], [255, 255, 255]] },
-  { name: 'Senja', icon: Sunset, bg: 'linear-gradient(135deg,#D1AB6B,#A85A57)', colors: [[74, 30, 92], [168, 48, 104], [235, 96, 91], [249, 168, 79], [253, 228, 141], [252, 252, 252]] },
-  { name: 'Kopi', icon: Coffee, bg: 'linear-gradient(135deg,#B39A80,#6E4D38)', colors: [[41, 23, 15], [87, 54, 37], [145, 99, 70], [201, 153, 119], [237, 204, 175], [255, 245, 235]] },
-  { name: 'Sakura', icon: Flower2, bg: 'linear-gradient(135deg,#C79AA5,#99596B)', colors: [[43, 19, 26], [115, 52, 69], [184, 108, 123], [227, 163, 175], [250, 212, 220], [255, 245, 247]] },
+  { name: 'Natural', icon: User, bg: 'linear-gradient(135deg,#A67657,#593A2C)', colors: [[36, 17, 10], [105, 41, 28], [179, 99, 71], [227, 155, 118], [255, 213, 186], [255, 246, 240]] },
+  { name: 'Sinematik', icon: Camera, bg: 'linear-gradient(135deg,#596B74,#693D2E)', colors: [[10, 25, 47], [35, 78, 112], [166, 88, 88], [224, 143, 98], [252, 206, 154], [250, 244, 237]] },
+  { name: 'Monokrom', icon: Moon, bg: 'linear-gradient(135deg,#666666,#262626)', colors: [[20, 20, 22], [65, 65, 70], [120, 120, 125], [175, 175, 180], [225, 225, 230], [255, 255, 255]] },
+  { name: 'Senja', icon: Sunset, bg: 'linear-gradient(135deg,#A67C3D,#733230)', colors: [[74, 30, 92], [168, 48, 104], [235, 96, 91], [249, 168, 79], [253, 228, 141], [252, 252, 252]] },
+  { name: 'Kopi', icon: Coffee, bg: 'linear-gradient(135deg,#8C7359,#402C20)', colors: [[41, 23, 15], [87, 54, 37], [145, 99, 70], [201, 153, 119], [237, 204, 175], [255, 245, 235]] },
+  { name: 'Sakura', icon: Flower2, bg: 'linear-gradient(135deg,#9E6775,#663744)', colors: [[43, 19, 26], [115, 52, 69], [184, 108, 123], [227, 163, 175], [250, 212, 220], [255, 245, 247]] },
 ];
 
 import { saveOrderToFirebase, getOrderFromFirebase } from './lib/firebase';
@@ -503,11 +503,11 @@ export default function App() {
           {/* ===== TOP: Logo Bar (floating inside photo) ===== */}
           <div className="absolute top-0 left-0 right-0 z-30 p-3 sm:p-4 flex items-center justify-between pointer-events-none">
             <div className="flex items-center pointer-events-auto">
-              <img src="/toko-cia-white.png" alt="Logo" className="w-16 h-16 sm:w-20 sm:h-20 flex-none drop-shadow-lg object-contain" />
+              <img src="/toko-cia-white.png" alt="Logo" className="w-12 h-12 sm:w-16 sm:h-16 flex-none drop-shadow-lg object-contain" />
             </div>
             
             {orderCode && (
-              <div className="flex items-center gap-2 bg-[#A67B5B] text-white text-xs font-bold py-1.5 px-3 rounded-none pointer-events-auto shadow-[0_0_15px_rgba(139,92,246,0.5)]">
+              <div className="flex items-center gap-2 bg-[#5A3D2B] text-white text-xs font-bold py-1.5 px-3 rounded-full pointer-events-auto shadow-[0_0_15px_rgba(139,92,246,0.5)]">
                 <span className="opacity-80">Pesanan:</span> {orderCode}
               </div>
             )}
@@ -519,7 +519,7 @@ export default function App() {
           {/* Tooltip Pilih Warna */}
           {customPhoto && !hasSelectedTheme && (
             <div className="relative mb-2 animate-bounce pointer-events-none drop-shadow-md">
-              <div className="bg-[#A67B5B] animate-pulse text-white text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-none flex items-center gap-1.5 whitespace-nowrap">
+              <div className="bg-[#5A3D2B] animate-pulse text-white text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-full flex items-center gap-1.5 whitespace-nowrap">
                 <PaintBucket size={14} strokeWidth={2.5} />
                 Pilih Warna
               </div>
@@ -530,7 +530,7 @@ export default function App() {
             <div
               key={t.name}
               onClick={() => handleThemeSelect(t.name)}
-              className={`group relative w-10 h-10 sm:w-12 sm:h-12 cursor-pointer transition-all duration-200 ease-in-out active:scale-95 border-2 flex items-center justify-center rounded-none pointer-events-auto ${
+              className={`group relative w-10 h-10 sm:w-12 sm:h-12 cursor-pointer transition-all duration-200 ease-in-out active:scale-95 border-2 flex items-center justify-center rounded-xl pointer-events-auto ${
                 activeTheme === t.name
                   ? 'border-white shadow-[0_0_12px_rgba(255,255,255,0.5)] scale-110'
                   : 'border-white/30 hover:border-white/60 hover:scale-105'
@@ -541,7 +541,7 @@ export default function App() {
                 {index + 1}
               </span>
               
-              <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+              <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
                 {t.name}
               </div>
             </div>
@@ -553,12 +553,12 @@ export default function App() {
 
           <label
             title="Unggah / Ganti Foto"
-            className="group relative w-9 h-9 sm:w-11 sm:h-11 rounded-none bg-black/40 backdrop-blur-sm border border-white/15 flex items-center justify-center text-white cursor-pointer transition-all duration-150 active:scale-90 hover:bg-black/60 pointer-events-auto"
+            className="group relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-black/40 backdrop-blur-sm border border-white/15 flex items-center justify-center text-white cursor-pointer transition-all duration-150 active:scale-90 hover:bg-black/60 pointer-events-auto"
           >
             <ImagePlus size={18} strokeWidth={2} />
             {/* Keep this file input attached to the floating button, but we also have the hidden one in root */}
             <input type="file" className="hidden" accept="image/*" onChange={uploadPhoto} />
-            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
               {customPhoto ? 'Ganti Foto' : 'Unggah Foto'}
             </div>
           </label>
@@ -569,7 +569,7 @@ export default function App() {
               {/* Tooltip Detail Wajah */}
               {!isBrushing && history.length === 0 && (
                 <div className="relative animate-bounce pointer-events-none drop-shadow-md mt-2">
-                  <div className="bg-[#A67B5B] animate-pulse text-white text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-none flex items-center gap-1.5 whitespace-nowrap">
+                  <div className="bg-[#5A3D2B] animate-pulse text-white text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-full flex items-center gap-1.5 whitespace-nowrap">
                     <Brush size={14} strokeWidth={2.5} />
                     Detail Wajah
                   </div>
@@ -577,26 +577,26 @@ export default function App() {
               )}
 
               <div className="flex items-center gap-2">
-                <div className={`overflow-hidden transition-all duration-300 flex items-center bg-black/40 backdrop-blur-sm rounded-none px-2 border border-white/10 ${isBrushing ? 'w-24 sm:w-32 h-9 sm:h-11 opacity-100' : 'w-0 h-9 sm:h-11 opacity-0 pointer-events-none'}`}>
+                <div className={`overflow-hidden transition-all duration-300 flex items-center bg-black/40 backdrop-blur-sm rounded-full px-2 border border-white/10 ${isBrushing ? 'w-24 sm:w-32 h-9 sm:h-11 opacity-100' : 'w-0 h-9 sm:h-11 opacity-0 pointer-events-none'}`}>
                   <input 
                      type="range" min="10" max="100" 
                      value={brushSize} 
                      onChange={(e) => setBrushSize(Number(e.target.value))}
-                     className="w-full accent-[#A67B5B]"
+                     className="w-full accent-[#5A3D2B]"
                   />
                 </div>
                 
                 <div
                   onClick={toggleBrush}
                   title="Mode Seleksi"
-                  className={`group relative w-9 h-9 sm:w-11 sm:h-11 rounded-none backdrop-blur-sm border flex items-center justify-center cursor-pointer transition-all duration-150 active:scale-90 ${
+                  className={`group relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl backdrop-blur-sm border flex items-center justify-center cursor-pointer transition-all duration-150 active:scale-90 ${
                     isBrushing && !coloredPhoto
-                      ? 'bg-[#A67B5B]/90 border-[#A67B5B] text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]'
+                      ? 'bg-[#5A3D2B]/90 border-[#5A3D2B] text-white shadow-[0_0_15px_rgba(90,61,43,0.4)]'
                       : 'bg-black/40 border-white/15 text-white hover:bg-black/60'
                   }`}
                 >
                   <Brush size={18} strokeWidth={2} />
-                  <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+                  <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
                     {coloredPhoto ? 'Edit Detail' : 'Kuas Detail'}
                   </div>
                 </div>
@@ -690,7 +690,7 @@ export default function App() {
               <button
                 onClick={handleConfirmOrder}
                 disabled={isConfirming}
-                className={`relative w-full rounded-none py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#A67B5B] to-[#704835] shadow-none hover:brightness-110 ${isConfirming ? 'opacity-70 pointer-events-none' : ''}`}
+                className={`relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#5A3D2B] to-[#3E271D] shadow-none hover:brightness-110 ${isConfirming ? 'opacity-70 pointer-events-none' : ''}`}
               >
                 {isConfirming ? <Loader2 className="w-5 h-5 animate-spin" /> : <PaintBucket size={18} strokeWidth={2.5} />}
                 {isConfirming ? 'Mengirim Pesanan...' : 'Konfirmasi Pesanan'}
@@ -699,7 +699,7 @@ export default function App() {
             {btnState === 'done' && orderCode && !window.location.pathname.startsWith('/unduh/') && (
               <button
                 onClick={() => setShowOrderModal(true)}
-                className="relative w-full rounded-none py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#A67B5B] to-[#704835] shadow-none hover:brightness-110"
+                className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#5A3D2B] to-[#3E271D] shadow-none hover:brightness-110"
               >
                 Lihat Kode Pesanan
               </button>
@@ -708,7 +708,7 @@ export default function App() {
               <div className="flex gap-2 w-full">
                 <button
                   onClick={downloadGuide}
-                  className="flex-1 relative rounded-none py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 bg-gradient-to-br from-[#A67B5B] to-[#704835]"
+                  className="flex-1 relative rounded-xl py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 bg-gradient-to-br from-[#5A3D2B] to-[#3E271D]"
                 >
                   <Download size={18} strokeWidth={2.5} />
                   Unduh Guide
@@ -716,7 +716,7 @@ export default function App() {
                 {lineartPhoto && (
                   <button
                     onClick={downloadLineart}
-                    className="flex-1 relative rounded-none py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 bg-gradient-to-br from-[#A67B5B] to-[#704835]"
+                    className="flex-1 relative rounded-xl py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 bg-gradient-to-br from-[#5A3D2B] to-[#3E271D]"
                   >
                     <Download size={18} strokeWidth={2.5} />
                     Unduh Lineart
