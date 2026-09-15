@@ -1,37 +1,25 @@
 import { useGLTF, Float, Clone } from '@react-three/drei';
 
 export default function FloatingBrushes() {
-  const { scene } = useGLTF('/paintbrush.glb');
-
-  // Define 1 position for the magical brush
-  // [x, y, z]
-  const brushes = [
-    { position: [-0.9, 1.0, 1.5], rotation: [0.2, 0.4, 0.5], floatIntensity: 1.5, scale: 0.7, lightColor: '#ffd700' }, // Gold
-  ];
+  const { scene } = useGLTF('/brush_v2.glb');
 
   return (
     <group>
-      {brushes.map((b, i) => (
-        <Float 
-          key={i} 
-          position={b.position as [number, number, number]} 
-          speed={1.5 + (i * 0.2)} // offset speed so they aren't synced
-          rotationIntensity={b.floatIntensity} 
-          floatIntensity={b.floatIntensity}
-        >
-          {/* Add a magical glowing light attached to each brush */}
-          <pointLight color={b.lightColor} intensity={3} distance={4} decay={2} />
-          
-          {/* We use Clone to instance the same scene multiple times safely */}
-          <Clone 
-            object={scene} 
-            scale={[b.scale, b.scale, b.scale]} 
-            rotation={b.rotation as [number, number, number]} 
-          />
-        </Float>
-      ))}
+      <Float 
+        position={[-1.2, 0.9, 0.3]} 
+        speed={1.5} 
+        rotationIntensity={1.5} 
+        floatIntensity={1.5}
+      >
+        <pointLight intensity={8.0} color="#ffd700" distance={4} decay={2} />
+        <Clone 
+          object={scene} 
+          scale={[0.32, 0.32, 0.32]} 
+          rotation={[2.06, -3.14, 1.33]} 
+        />
+      </Float>
     </group>
   );
 }
 
-useGLTF.preload('/paintbrush.glb');
+useGLTF.preload('/brush_v2.glb');

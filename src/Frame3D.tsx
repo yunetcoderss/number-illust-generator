@@ -1,6 +1,6 @@
 import { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { useGLTF, Center, Environment, PresentationControls, Stars, Sparkles, Html, useProgress } from '@react-three/drei';
+import { useGLTF, Center, PresentationControls, Stars, Sparkles, Html, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
 import RoomBackground from './RoomBackground';
 import FloatingBrushes from './FloatingBrushes';
@@ -8,6 +8,14 @@ import FloatingBrushes from './FloatingBrushes';
 interface FrameProps {
   imageUrl: string;
   onFrameClick?: () => void;
+  onLoaded?: () => void;
+}
+
+function LoadNotifier({ onLoaded }: { onLoaded?: () => void }) {
+  useEffect(() => {
+    if (onLoaded) onLoaded();
+  }, [onLoaded]);
+  return null;
 }
 
 function SpaceLoader() {
@@ -17,13 +25,13 @@ function SpaceLoader() {
       <div className="flex flex-col items-center justify-center pointer-events-none">
         <div className="relative flex items-center justify-center">
           {/* Outer orbiting ring */}
-          <div className="absolute w-20 h-20 border-2 border-purple-500/30 border-t-purple-400 rounded-full animate-spin"></div>
+          <div className="absolute w-20 h-20 border-2 border-[#A67B5B]/30 border-t-[#D2B48C] rounded-full animate-spin"></div>
           {/* Inner core */}
-          <div className="w-12 h-12 bg-purple-900/50 backdrop-blur-md rounded-full shadow-[0_0_20px_#8a2be2] animate-pulse flex items-center justify-center">
-            <div className="w-3 h-3 bg-purple-200 rounded-full shadow-[0_0_10px_#ffffff]"></div>
+          <div className="w-12 h-12 bg-[#4A2810]/50 backdrop-blur-md rounded-full shadow-[0_0_20px_#A67B5B] animate-pulse flex items-center justify-center">
+            <div className="w-3 h-3 bg-[#FFE3D0] rounded-full shadow-[0_0_10px_#ffffff]"></div>
           </div>
         </div>
-        <p className="mt-5 font-bold tracking-[0.2em] text-xs text-purple-200/80 animate-pulse whitespace-nowrap drop-shadow-[0_0_5px_#8a2be2]">
+        <p className="mt-5 font-bold tracking-[0.2em] text-xs text-[#FFE3D0]/80 animate-pulse whitespace-nowrap drop-shadow-[0_0_5px_#A67B5B]">
           LOADING... {progress.toFixed(0)}%
         </p>
       </div>
@@ -44,6 +52,18 @@ const FrameModel = ({ imageUrl, onFrameClick }: FrameProps) => {
   const rotZ = -3.14;
   const frameScale = 9.6;
   const flipY = false;
+
+  // Change frame color to light brown
+  useEffect(() => {
+    if (scene) {
+      scene.traverse((child: any) => {
+        if (child.isMesh && child.material) {
+          // Set to a warm light brown color (#dcb494)
+          child.material.color.set('#dcb494');
+        }
+      });
+    }
+  }, [scene]);
 
   // Safe texture loading to prevent Suspense crashes on CORS errors
   const [texture, setTexture] = useState<THREE.Texture | null>(null);
@@ -106,16 +126,14 @@ const FrameModel = ({ imageUrl, onFrameClick }: FrameProps) => {
     >
       <Center>
         <primitive object={scene} scale={[frameScale, frameScale, frameScale]} />
-        {/* We place a plane inside the frame. */}
+        {/* We place a plane inside the scene. */}
         <mesh position={[imgX, imgY, imgZ]} rotation={[rotX, rotY, rotZ]}>
           <planeGeometry args={[width, height]} />
+          {/* Using meshStandardMaterial without Environment mapping is fast but reacts to our warm lights */}
           <meshStandardMaterial 
             map={texture} 
-            emissive="#ffffff"
-            emissiveMap={texture}
-            emissiveIntensity={0.3} // Slightly lower emissive so reflections pop more
-            roughness={0.02} // Extremely smooth for strong glass reflection
-            metalness={0.6} // High metalness to simulate highly reflective glossy surface/glass
+            roughness={0.2}
+            metalness={0.2}
             side={THREE.DoubleSide} 
           />
         </mesh>
@@ -124,32 +142,38 @@ const FrameModel = ({ imageUrl, onFrameClick }: FrameProps) => {
   );
 };
 
-export default function Frame3D({ imageUrl, onFrameClick }: FrameProps) {
+export default function Frame3D({ imageUrl, onFrameClick, onLoaded }: FrameProps) {
   return (
-    <div className="absolute inset-0 w-full h-full z-10 pointer-events-auto" style={{ touchAction: 'none' }}>
-      <Canvas camera={{ position: [0, 0, 8], fov: 45 }} style={{ touchAction: 'none' }}>
-        {/* Dark purple ambient light */}
-        <ambientLight intensity={0.6} color="#3b1054" />
+    <div className="w-full h-full cursor-grab active:cursor-grabbing pointer-events-auto" style={{ touchAction: 'none' }}>
+      <Canvas 
+        dpr={1} 
+        performance={{ min: 0.5 }}
+        camera={{ position: [0, 0, 8], fov: 45 }} 
+        style={{ touchAction: 'none' }}
+      >
+        {/* Warm ambient light, brightened but still warm */}
+        <ambientLight intensity={1.0} color="#d1a38a" />
         
-        {/* Magical purple point lights for galaxy vibe (SHADOWS REMOVED FOR PERFORMANCE) */}
-        <pointLight position={[0, 2, 2]} intensity={3} color="#8a2be2" />
-        <pointLight position={[-5, 5, -5]} intensity={2} color="#d100ff" />
-        <pointLight position={[5, -2, 2]} intensity={1.5} color="#ff00ff" />
+        {/* Warm directional light for a bright golden vibe */}
+        <directionalLight position={[2, 5, 5]} intensity={2.5} color="#ffd4a3" />
         
-        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={0.5} color="#ffffff" />
+        {/* Warm accent lights (Amber and Soft Gold) */}
+        <pointLight position={[-3, 1, -2]} intensity={4.0} color="#ff8c00" distance={15} decay={2} />
+        <pointLight position={[3, 2, -1]} intensity={3.0} color="#ffb347" distance={15} decay={2} />
         
         <Suspense fallback={<SpaceLoader />}>
+          <LoadNotifier onLoaded={onLoaded} />
           {/* Static Background Room */}
           <RoomBackground />
           <FloatingBrushes />
           
-          <Environment preset="night" />
+          {/* Environment removed entirely to completely eliminate reflection/IBL lag */}
           
-          {/* Twinkling Galaxy Stars (Reduced count for performance) */}
-          <Stars radius={100} depth={50} count={1000} factor={4} saturation={1} fade speed={1.5} />
+          {/* Twinkling Galaxy Stars (Reduced count and disabled fade for performance) */}
+          <Stars radius={100} depth={50} count={300} factor={4} saturation={1} speed={0.5} />
           
           {/* Purple Sparkles floating around (Reduced count for performance) */}
-          <Sparkles color="#d8b4fe" count={40} scale={12} size={4} speed={0.4} opacity={0.6} />
+          <Sparkles color="#d8b4fe" count={20} scale={12} size={4} speed={0.2} opacity={0.6} />
           
           {/* Rotatable Frame */}
           {imageUrl && (

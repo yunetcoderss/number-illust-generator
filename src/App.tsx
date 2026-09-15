@@ -2,14 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { processImageToLineart } from './lib/image-processor';
 import { User, Camera, Moon, Sunset, Coffee, Flower2, ImagePlus, Brush, Download, Loader2, PaintBucket, Hand, ZoomIn, ZoomOut, Undo2, Redo2, Copy } from 'lucide-react';
 import Frame3D from './Frame3D';
+import GuideCard from './GuideCard';
 
 const themes = [
-  { name: 'Natural', icon: User, bg: 'linear-gradient(135deg,#D2B48C,#8B4513)', colors: [[36, 17, 10], [105, 41, 28], [179, 99, 71], [227, 155, 118], [255, 213, 186], [255, 246, 240]] },
-  { name: 'Sinematik', icon: Camera, bg: 'linear-gradient(135deg,#234E70,#E08F62)', colors: [[10, 25, 47], [35, 78, 112], [166, 88, 88], [224, 143, 98], [252, 206, 154], [250, 244, 237]] },
-  { name: 'Monokrom', icon: Moon, bg: 'linear-gradient(135deg,#A9A9A9,#000000)', colors: [[20, 20, 22], [65, 65, 70], [120, 120, 125], [175, 175, 180], [225, 225, 230], [255, 255, 255]] },
-  { name: 'Senja', icon: Sunset, bg: 'linear-gradient(135deg,#FFD86B,#FF6B6B)', colors: [[74, 30, 92], [168, 48, 104], [235, 96, 91], [249, 168, 79], [253, 228, 141], [252, 252, 252]] },
-  { name: 'Kopi', icon: Coffee, bg: 'linear-gradient(135deg,#D4A373,#5C3A21)', colors: [[41, 23, 15], [87, 54, 37], [145, 99, 70], [201, 153, 119], [237, 204, 175], [255, 245, 235]] },
-  { name: 'Sakura', icon: Flower2, bg: 'linear-gradient(135deg,#FFB4C6,#FF9EB0)', colors: [[43, 19, 26], [115, 52, 69], [184, 108, 123], [227, 163, 175], [250, 212, 220], [255, 245, 247]] },
+  { name: 'Natural', icon: User, bg: 'linear-gradient(135deg,#D3AC97,#99654C)', colors: [[36, 17, 10], [105, 41, 28], [179, 99, 71], [227, 155, 118], [255, 213, 186], [255, 246, 240]] },
+  { name: 'Sinematik', icon: Camera, bg: 'linear-gradient(135deg,#8D9FA8,#A8634B)', colors: [[10, 25, 47], [35, 78, 112], [166, 88, 88], [224, 143, 98], [252, 206, 154], [250, 244, 237]] },
+  { name: 'Monokrom', icon: Moon, bg: 'linear-gradient(135deg,#999999,#4D4D4D)', colors: [[20, 20, 22], [65, 65, 70], [120, 120, 125], [175, 175, 180], [225, 225, 230], [255, 255, 255]] },
+  { name: 'Senja', icon: Sunset, bg: 'linear-gradient(135deg,#D1AB6B,#A85A57)', colors: [[74, 30, 92], [168, 48, 104], [235, 96, 91], [249, 168, 79], [253, 228, 141], [252, 252, 252]] },
+  { name: 'Kopi', icon: Coffee, bg: 'linear-gradient(135deg,#B39A80,#6E4D38)', colors: [[41, 23, 15], [87, 54, 37], [145, 99, 70], [201, 153, 119], [237, 204, 175], [255, 245, 235]] },
+  { name: 'Sakura', icon: Flower2, bg: 'linear-gradient(135deg,#C79AA5,#99596B)', colors: [[43, 19, 26], [115, 52, 69], [184, 108, 123], [227, 163, 175], [250, 212, 220], [255, 245, 247]] },
 ];
 
 import { saveOrderToFirebase, getOrderFromFirebase } from './lib/firebase';
@@ -52,6 +53,7 @@ export default function App() {
 
   const [generating, setGenerating] = useState(false);
   const [btnState, setBtnState] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [is3DLoaded, setIs3DLoaded] = useState(false);
   const [loadingPct, setLoadingPct] = useState(0);
   const [loadingText, setLoadingText] = useState('Menggambar vektor...');
 
@@ -433,9 +435,9 @@ export default function App() {
   };
 
   return (
-    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-[#090714] text-ink flex items-center justify-center select-none">
+    <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black text-ink flex items-center justify-center select-none">
       <div className="relative w-full h-[100dvh]">
-        <div className="absolute inset-0 rounded-none sm:rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.5)] bg-black">
+        <div className="absolute inset-0 rounded-none sm:rounded-none overflow-hidden shadow-[0_0_60px_rgba(0,0,0,0.5)] bg-black">
           {/* Hidden file input for frame click upload */}
           <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={uploadPhoto} />
 
@@ -444,6 +446,7 @@ export default function App() {
             <Frame3D 
               imageUrl={coloredPhoto || customPhoto || '/default_photo.jpg'} 
               onFrameClick={handleFrameClick}
+              onLoaded={() => setIs3DLoaded(true)}
             />
           )}
 
@@ -496,14 +499,15 @@ export default function App() {
 
         {/* ==== UI CONSTRAINED WRAPPER ==== */}
         <div className="absolute inset-0 mx-auto max-w-5xl w-full h-full pointer-events-none">
+          <div className={`transition-opacity duration-300 ${btnState === 'busy' || !is3DLoaded ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           {/* ===== TOP: Logo Bar (floating inside photo) ===== */}
-          <div className="absolute top-0 left-0 right-0 z-30 p-3 sm:p-4 flex items-center justify-between bg-gradient-to-b from-black/50 via-black/20 to-transparent pointer-events-none">
+          <div className="absolute top-0 left-0 right-0 z-30 p-3 sm:p-4 flex items-center justify-between pointer-events-none">
             <div className="flex items-center pointer-events-auto">
-              <img src="/logo.png" alt="Logo" className="w-16 h-16 sm:w-20 sm:h-20 flex-none drop-shadow-lg object-contain" />
+              <img src="/toko-cia-white.png" alt="Logo" className="w-16 h-16 sm:w-20 sm:h-20 flex-none drop-shadow-lg object-contain" />
             </div>
             
             {orderCode && (
-              <div className="flex items-center gap-2 bg-[#8B5CF6] text-white text-xs font-bold py-1.5 px-3 rounded-xl pointer-events-auto shadow-[0_0_15px_rgba(139,92,246,0.5)]">
+              <div className="flex items-center gap-2 bg-[#A67B5B] text-white text-xs font-bold py-1.5 px-3 rounded-none pointer-events-auto shadow-[0_0_15px_rgba(139,92,246,0.5)]">
                 <span className="opacity-80">Pesanan:</span> {orderCode}
               </div>
             )}
@@ -515,7 +519,7 @@ export default function App() {
           {/* Tooltip Pilih Warna */}
           {customPhoto && !hasSelectedTheme && (
             <div className="relative mb-2 animate-bounce pointer-events-none drop-shadow-md">
-              <div className="bg-[#8B5CF6] animate-pulse text-white text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 whitespace-nowrap">
+              <div className="bg-[#A67B5B] animate-pulse text-white text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-none flex items-center gap-1.5 whitespace-nowrap">
                 <PaintBucket size={14} strokeWidth={2.5} />
                 Pilih Warna
               </div>
@@ -526,7 +530,7 @@ export default function App() {
             <div
               key={t.name}
               onClick={() => handleThemeSelect(t.name)}
-              className={`group relative w-10 h-10 sm:w-12 sm:h-12 cursor-pointer transition-all duration-200 ease-in-out active:scale-95 border-2 flex items-center justify-center rounded-2xl pointer-events-auto ${
+              className={`group relative w-10 h-10 sm:w-12 sm:h-12 cursor-pointer transition-all duration-200 ease-in-out active:scale-95 border-2 flex items-center justify-center rounded-none pointer-events-auto ${
                 activeTheme === t.name
                   ? 'border-white shadow-[0_0_12px_rgba(255,255,255,0.5)] scale-110'
                   : 'border-white/30 hover:border-white/60 hover:scale-105'
@@ -537,7 +541,7 @@ export default function App() {
                 {index + 1}
               </span>
               
-              <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+              <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
                 {t.name}
               </div>
             </div>
@@ -549,12 +553,12 @@ export default function App() {
 
           <label
             title="Unggah / Ganti Foto"
-            className="group relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-black/40 backdrop-blur-sm border border-white/15 flex items-center justify-center text-white cursor-pointer transition-all duration-150 active:scale-90 hover:bg-black/60 pointer-events-auto"
+            className="group relative w-9 h-9 sm:w-11 sm:h-11 rounded-none bg-black/40 backdrop-blur-sm border border-white/15 flex items-center justify-center text-white cursor-pointer transition-all duration-150 active:scale-90 hover:bg-black/60 pointer-events-auto"
           >
             <ImagePlus size={18} strokeWidth={2} />
             {/* Keep this file input attached to the floating button, but we also have the hidden one in root */}
             <input type="file" className="hidden" accept="image/*" onChange={uploadPhoto} />
-            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+            <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
               {customPhoto ? 'Ganti Foto' : 'Unggah Foto'}
             </div>
           </label>
@@ -565,7 +569,7 @@ export default function App() {
               {/* Tooltip Detail Wajah */}
               {!isBrushing && history.length === 0 && (
                 <div className="relative animate-bounce pointer-events-none drop-shadow-md mt-2">
-                  <div className="bg-[#8B5CF6] animate-pulse text-white text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-xl flex items-center gap-1.5 whitespace-nowrap">
+                  <div className="bg-[#A67B5B] animate-pulse text-white text-[10px] sm:text-xs font-bold py-1.5 px-3 rounded-none flex items-center gap-1.5 whitespace-nowrap">
                     <Brush size={14} strokeWidth={2.5} />
                     Detail Wajah
                   </div>
@@ -573,26 +577,26 @@ export default function App() {
               )}
 
               <div className="flex items-center gap-2">
-                <div className={`overflow-hidden transition-all duration-300 flex items-center bg-black/40 backdrop-blur-sm rounded-xl px-2 border border-white/10 ${isBrushing ? 'w-24 sm:w-32 h-9 sm:h-11 opacity-100' : 'w-0 h-9 sm:h-11 opacity-0 pointer-events-none'}`}>
+                <div className={`overflow-hidden transition-all duration-300 flex items-center bg-black/40 backdrop-blur-sm rounded-none px-2 border border-white/10 ${isBrushing ? 'w-24 sm:w-32 h-9 sm:h-11 opacity-100' : 'w-0 h-9 sm:h-11 opacity-0 pointer-events-none'}`}>
                   <input 
                      type="range" min="10" max="100" 
                      value={brushSize} 
                      onChange={(e) => setBrushSize(Number(e.target.value))}
-                     className="w-full accent-[#8B5CF6]"
+                     className="w-full accent-[#A67B5B]"
                   />
                 </div>
                 
                 <div
                   onClick={toggleBrush}
                   title="Mode Seleksi"
-                  className={`group relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl backdrop-blur-sm border flex items-center justify-center cursor-pointer transition-all duration-150 active:scale-90 ${
+                  className={`group relative w-9 h-9 sm:w-11 sm:h-11 rounded-none backdrop-blur-sm border flex items-center justify-center cursor-pointer transition-all duration-150 active:scale-90 ${
                     isBrushing && !coloredPhoto
-                      ? 'bg-[#8B5CF6]/90 border-[#8B5CF6] text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]'
+                      ? 'bg-[#A67B5B]/90 border-[#A67B5B] text-white shadow-[0_0_15px_rgba(139,92,246,0.4)]'
                       : 'bg-black/40 border-white/15 text-white hover:bg-black/60'
                   }`}
                 >
                   <Brush size={18} strokeWidth={2} />
-                  <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+                  <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-black/80 backdrop-blur-sm text-white text-[11px] font-semibold py-1 px-2.5 rounded-none whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
                     {coloredPhoto ? 'Edit Detail' : 'Kuas Detail'}
                   </div>
                 </div>
@@ -602,7 +606,7 @@ export default function App() {
               {isBrushing && !coloredPhoto && (
                 <>
                   {/* Tool Panel: Brush & Pan */}
-                  <div className="flex bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden shadow-lg mt-1">
+                  <div className="flex bg-black/40 backdrop-blur-sm rounded-none border border-white/10 overflow-hidden shadow-lg mt-1">
                     <div 
                       onClick={() => setActiveTool('brush')}
                       className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center cursor-pointer transition-colors ${activeTool === 'brush' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'}`}
@@ -621,7 +625,7 @@ export default function App() {
                   </div>
 
                   {/* Tool Panel: Zoom Out & In */}
-                  <div className="flex bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden shadow-lg mt-1">
+                  <div className="flex bg-black/40 backdrop-blur-sm rounded-none border border-white/10 overflow-hidden shadow-lg mt-1">
                     <div 
                       onClick={() => setZoomLevel(z => Math.max(0.2, z - 0.5))}
                       className="w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center cursor-pointer text-white/80 hover:text-white transition-colors"
@@ -640,7 +644,7 @@ export default function App() {
                   </div>
                   
                   {/* Tool Panel: Undo & Redo */}
-                  <div className="flex bg-black/40 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden shadow-lg mt-1">
+                  <div className="flex bg-black/40 backdrop-blur-sm rounded-none border border-white/10 overflow-hidden shadow-lg mt-1">
                     <div 
                       onClick={undo}
                       className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center cursor-pointer transition-colors ${historyStep >= 0 ? 'text-white/80 hover:text-white' : 'text-white/20 pointer-events-none'}`}
@@ -664,28 +668,29 @@ export default function App() {
 
 
         </div>
+        </div>
 
         {/* ===== Loading Progress Overlay ===== */}
-        <div className={`absolute left-3 right-3 sm:left-4 sm:right-4 bottom-20 sm:bottom-24 bg-black/60 backdrop-blur-md rounded-2xl p-2.5 sm:p-4 flex items-center gap-2.5 pointer-events-none transition-all duration-300 ease-in-out z-30 ${btnState === 'busy' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 flex-none animate-spin text-[#C084FC]" />
+        <div className={`absolute left-3 right-3 sm:left-4 sm:right-4 bottom-20 sm:bottom-24 bg-black/60 backdrop-blur-md rounded-none p-2.5 sm:p-4 flex items-center gap-2.5 pointer-events-none transition-all duration-300 ease-in-out z-30 ${btnState === 'busy' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+          <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 flex-none animate-spin text-[#D2B48C]" />
           <div className="flex-1 min-w-0">
             <div className="flex justify-between text-[10px] sm:text-xs text-white/80 font-semibold mb-1">
               <span>{loadingText}</span><span>{Math.floor(loadingPct)}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/20 overflow-hidden">
-              <div className="h-full rounded-full bg-gradient-to-r from-[#C084FC] to-white transition-all duration-150 ease-linear" style={{ width: `${loadingPct}%` }}></div>
+              <div className="h-full rounded-full bg-gradient-to-r from-[#D2B48C] to-white transition-all duration-150 ease-linear" style={{ width: `${loadingPct}%` }}></div>
             </div>
           </div>
         </div>
 
         {/* ===== BOTTOM: Paste & Download Button (floating inside photo) ===== */}
-        <div className={`absolute bottom-0 left-0 right-0 z-[100] p-3 sm:p-4 pb-[calc(10px+env(safe-area-inset-bottom,0px))] bg-gradient-to-t from-black/80 via-black/40 to-transparent transition-all duration-300 ${(btnState === 'done') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+        <div className={`absolute bottom-0 left-0 right-0 z-[100] p-3 sm:p-4 pb-[calc(10px+env(safe-area-inset-bottom,0px))] transition-all duration-300 ${(btnState === 'done') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
           <div className="flex flex-col gap-2 pointer-events-auto">
             {btnState === 'done' && !orderCode && !window.location.pathname.startsWith('/unduh/') && (
               <button
                 onClick={handleConfirmOrder}
                 disabled={isConfirming}
-                className={`relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#8B5CF6] to-[#5B21B6] shadow-none hover:brightness-110 ${isConfirming ? 'opacity-70 pointer-events-none' : ''}`}
+                className={`relative w-full rounded-none py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#A67B5B] to-[#704835] shadow-none hover:brightness-110 ${isConfirming ? 'opacity-70 pointer-events-none' : ''}`}
               >
                 {isConfirming ? <Loader2 className="w-5 h-5 animate-spin" /> : <PaintBucket size={18} strokeWidth={2.5} />}
                 {isConfirming ? 'Mengirim Pesanan...' : 'Konfirmasi Pesanan'}
@@ -694,16 +699,16 @@ export default function App() {
             {btnState === 'done' && orderCode && !window.location.pathname.startsWith('/unduh/') && (
               <button
                 onClick={() => setShowOrderModal(true)}
-                className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9] shadow-none hover:brightness-110"
+                className="relative w-full rounded-none py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#A67B5B] to-[#704835] shadow-none hover:brightness-110"
               >
                 Lihat Kode Pesanan
               </button>
             )}
-            {btnState === 'done' && (
+            {btnState === 'done' && window.location.pathname.startsWith('/unduh/') && (
               <div className="flex gap-2 w-full">
                 <button
                   onClick={downloadGuide}
-                  className={`flex-1 relative rounded-xl py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 ${window.location.pathname.startsWith('/unduh/') ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]' : 'bg-white/20 hover:bg-white/30 border border-white/20'}`}
+                  className="flex-1 relative rounded-none py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 bg-gradient-to-br from-[#A67B5B] to-[#704835]"
                 >
                   <Download size={18} strokeWidth={2.5} />
                   Unduh Guide
@@ -711,7 +716,7 @@ export default function App() {
                 {lineartPhoto && (
                   <button
                     onClick={downloadLineart}
-                    className={`flex-1 relative rounded-xl py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 ${window.location.pathname.startsWith('/unduh/') ? 'bg-gradient-to-br from-[#8B5CF6] to-[#6D28D9]' : 'bg-white/20 hover:bg-white/30 border border-white/20'}`}
+                    className="flex-1 relative rounded-none py-3 px-2 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-1.5 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm shadow-none hover:brightness-110 bg-gradient-to-br from-[#A67B5B] to-[#704835]"
                   >
                     <Download size={18} strokeWidth={2.5} />
                     Unduh Lineart
@@ -720,7 +725,9 @@ export default function App() {
               </div>
             )}
           </div>
-        </div>
+      </div>
+        
+        <GuideCard startTyping={is3DLoaded} />
 
       </div>
 
@@ -729,15 +736,15 @@ export default function App() {
       {/* ===== Order Success Modal ===== */}
       {showOrderModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-[#090714] border border-[#8B5CF6] rounded-xl p-6 max-w-sm w-full flex flex-col items-center text-center">
+          <div className="bg-[#2E1D13] border border-[#A67B5B] rounded-none p-6 max-w-sm w-full flex flex-col items-center text-center">
             <h2 className="text-xl font-baloo font-bold text-white mb-2">Pesanan Sukses</h2>
             <p className="text-sm text-white/70 mb-6">Berikan kode unik ini kepada Seller.</p>
             
-            <div className="w-full bg-black border border-white/20 rounded-lg p-4 flex items-center justify-between mb-6">
-              <span className="font-mono text-xl font-bold text-[#C084FC] tracking-widest select-text">{orderCode}</span>
+            <div className="w-full bg-black border border-white/20 rounded-none p-4 flex items-center justify-between mb-6">
+              <span className="font-mono text-xl font-bold text-[#FFE3D0] tracking-widest select-text">{orderCode}</span>
               <button 
                 onClick={() => copyToClipboard(orderCode || '')}
-                className="bg-[#8B5CF6]/20 hover:bg-[#8B5CF6]/40 p-2 rounded-lg text-white"
+                className="bg-[#A67B5B]/20 hover:bg-[#A67B5B]/40 p-2 rounded-none text-white"
                 title="Salin Kode"
               >
                 <Copy size={18} />
@@ -746,7 +753,7 @@ export default function App() {
             
             <button 
               onClick={() => setShowOrderModal(false)}
-              className="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white font-bold py-3 rounded-lg"
+              className="w-full bg-[#A67B5B] hover:bg-[#855B40] text-white font-bold py-3 rounded-none"
             >
               Tutup
             </button>
