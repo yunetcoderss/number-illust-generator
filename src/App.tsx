@@ -310,10 +310,11 @@ export default function App() {
         setIsPortrait(portrait);
         const A5_W = portrait ? 1748 : 2480;
         const A5_H = portrait ? 2480 : 1748;
-        const MARGIN_X = Math.round(1.2 * 300 / 2.54); // 142
-        const MARGIN_Y = Math.round(1.1 * 300 / 2.54); // 130
+        const MARGIN_X = Math.round(1.2 * 300 / 2.54); // 1.2cm
+        const MARGIN_TOP = Math.round(1.5 * 300 / 2.54); // 1.5cm
+        const MARGIN_BOTTOM = Math.round(0.7 * 300 / 2.54); // 0.7cm
         const INNER_W = A5_W - (MARGIN_X * 2);
-        const INNER_H = A5_H - (MARGIN_Y * 2);
+        const INNER_H = A5_H - (MARGIN_TOP + MARGIN_BOTTOM);
         
         const canvas = document.createElement('canvas');
         canvas.width = A5_W;
@@ -340,7 +341,7 @@ export default function App() {
             sy = (img.height - sHeight) / 2;
         }
         
-        ctx.drawImage(img, sx, sy, sWidth, sHeight, MARGIN_X, MARGIN_Y, INNER_W, INNER_H);
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, MARGIN_X, MARGIN_TOP, INNER_W, INNER_H);
         
         setCustomPhoto(canvas.toDataURL('image/jpeg', 0.95));
         showToast('Foto berhasil diunggah dengan proporsi A5!');
