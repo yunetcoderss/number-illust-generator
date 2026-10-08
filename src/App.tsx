@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { processImageToLineart } from './lib/image-processor';
-import { User, Camera, Moon, Sunset, Coffee, Flower2, ImagePlus, Brush, Download, Loader2, PaintBucket, Hand, ZoomIn, ZoomOut, Undo2, Redo2, Copy } from 'lucide-react';
+import { User, Camera, Moon, Sunset, Coffee, Flower2, ImagePlus, Brush, Eraser, Download, Loader2, PaintBucket, Hand, ZoomIn, ZoomOut, Undo2, Redo2, Copy } from 'lucide-react';
 import Frame3D from './Frame3D';
 import GuideCard from './GuideCard';
 
@@ -30,7 +30,7 @@ export default function App() {
   const [brushSize, setBrushSize] = useState(40);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isPortrait, setIsPortrait] = useState(true);
-  const [activeTool, setActiveTool] = useState<'brush' | 'pan'>('brush');
+  const [activeTool, setActiveTool] = useState<'brush' | 'pan' | 'eraser'>('brush');
   const brushCanvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -217,7 +217,7 @@ export default function App() {
       clientY = (e as any).clientY;
     }
 
-    if (activeTool === 'brush') {
+    if (activeTool === 'brush' || activeTool === 'eraser') {
       isDrawing.current = true;
       handlePointerMove(e);
     } else if (activeTool === 'pan') {
@@ -238,7 +238,7 @@ export default function App() {
       clientY = (e as any).clientY;
     }
 
-    if (activeTool === 'brush' && isDrawing.current) {
+    if ((activeTool === 'brush' || activeTool === 'eraser') && isDrawing.current) {
       const canvas = brushCanvasRef.current;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -254,7 +254,8 @@ export default function App() {
       ctx.lineWidth = brushSize * scaleX;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
+      ctx.globalCompositeOperation = activeTool === 'eraser' ? 'destination-out' : 'source-over';
+      ctx.strokeStyle = activeTool === 'eraser' ? 'rgba(0,0,0,1)' : 'rgba(255, 0, 0, 1)';
       ctx.lineTo(x, y);
       ctx.stroke();
       ctx.beginPath();
@@ -268,7 +269,7 @@ export default function App() {
   };
 
   const handlePointerUp = () => {
-    if (activeTool === 'brush' && isDrawing.current) {
+    if ((activeTool === 'brush' || activeTool === 'eraser') && isDrawing.current) {
       isDrawing.current = false;
       if (brushCanvasRef.current) {
         brushCanvasRef.current.getContext('2d')?.beginPath();
@@ -628,6 +629,14 @@ export default function App() {
                       title="Kuas"
                     >
                       <Brush size={16} />
+                    </div>
+                    <div className="w-[1px] bg-white/10"></div>
+                    <div 
+                      onClick={() => setActiveTool('eraser')}
+                      className={`w-9 h-9 sm:w-11 sm:h-11 flex items-center justify-center cursor-pointer transition-colors ${activeTool === 'eraser' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'}`}
+                      title="Penghapus"
+                    >
+                      <Eraser size={16} />
                     </div>
                     <div className="w-[1px] bg-white/10"></div>
                     <div 
