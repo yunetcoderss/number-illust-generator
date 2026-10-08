@@ -54,9 +54,9 @@ const uploadToImgBB = async (base64Str: string, name: string) => {
     return url;
 };
 
-export const saveOrderToFirebase = async (guideBase64: string, lineartBase64: string, paletteNumber: number) => {
+export const saveOrderToFirebase = async (guideBase64: string, lineartBase64: string, paletteNumber: number, existingCode?: string) => {
     try {
-        const orderCode = generateOrderCode();
+        const orderCode = existingCode || generateOrderCode();
         
         // 1. Upload Images to ImgBB
         const [guideUrl, lineartUrl] = await Promise.all([

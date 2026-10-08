@@ -20,9 +20,10 @@ export async function processImageToLineart(
     const isPortrait = img.height > img.width;
     const A5_W = isPortrait ? 1748 : 2480;
     const A5_H = isPortrait ? 2480 : 1748;
-    const MARGIN = 177;
-    const INNER_W = A5_W - (MARGIN * 2);
-    const INNER_H = A5_H - (MARGIN * 2);
+    const MARGIN_X = Math.round(1.2 * 300 / 2.54); // 142
+    const MARGIN_Y = Math.round(1.1 * 300 / 2.54); // 130
+    const INNER_W = A5_W - (MARGIN_X * 2);
+    const INNER_H = A5_H - (MARGIN_Y * 2);
 
     const canvas = document.createElement('canvas');
     canvas.width = INNER_W;
@@ -34,12 +35,12 @@ export async function processImageToLineart(
 
     // 1. Draw blurred background (low detail) with enhanced contrast & saturation
     ctx.filter = 'contrast(125%) saturate(115%) blur(8px)';
-    ctx.drawImage(img, MARGIN, MARGIN, INNER_W, INNER_H, 0, 0, INNER_W, INNER_H);
+    ctx.drawImage(img, MARGIN_X, MARGIN_Y, INNER_W, INNER_H, 0, 0, INNER_W, INNER_H);
     const blurredData = ctx.getImageData(0, 0, INNER_W, INNER_H).data;
 
     // 2. Draw sharp image (high detail) with enhanced contrast & sharpness
     ctx.filter = 'contrast(125%) saturate(115%) blur(0.5px)';
-    ctx.drawImage(img, MARGIN, MARGIN, INNER_W, INNER_H, 0, 0, INNER_W, INNER_H);
+    ctx.drawImage(img, MARGIN_X, MARGIN_Y, INNER_W, INNER_H, 0, 0, INNER_W, INNER_H);
     const sharpData = ctx.getImageData(0, 0, INNER_W, INNER_H).data;
 
     // 3. Extract mask if brush was used
@@ -49,7 +50,7 @@ export async function processImageToLineart(
         await new Promise(r => { maskImg.onload = r; maskImg.src = maskBase64; });
         ctx.filter = 'none';
         ctx.clearRect(0, 0, INNER_W, INNER_H);
-        ctx.drawImage(maskImg, MARGIN, MARGIN, INNER_W, INNER_H, 0, 0, INNER_W, INNER_H);
+        ctx.drawImage(maskImg, MARGIN_X, MARGIN_Y, INNER_W, INNER_H, 0, 0, INNER_W, INNER_H);
         maskData = ctx.getImageData(0, 0, INNER_W, INNER_H).data;
     }
 
@@ -380,7 +381,7 @@ export async function processImageToLineart(
     const fcCtx = finalColoredCanvas.getContext('2d')!;
     fcCtx.fillStyle = '#ffffff';
     fcCtx.fillRect(0, 0, A5_W, A5_H);
-    fcCtx.drawImage(canvas, MARGIN, MARGIN);
+    fcCtx.drawImage(canvas, MARGIN_X, MARGIN_Y);
     
     const coloredDataUrl = finalColoredCanvas.toDataURL('image/jpeg', 0.90);
     const guideDataUrl = guideCanvas.toDataURL('image/jpeg', 0.90);
@@ -539,7 +540,7 @@ export async function processImageToLineart(
     
     finalCtx.fillStyle = '#ffffff';
     finalCtx.fillRect(0, 0, A5_W, A5_H);
-    finalCtx.drawImage(canvas, MARGIN, MARGIN);
+    finalCtx.drawImage(canvas, MARGIN_X, MARGIN_Y);
 
     const lineartDataUrl = finalCanvas.toDataURL('image/jpeg', 0.90);
     

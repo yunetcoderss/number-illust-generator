@@ -309,9 +309,10 @@ export default function App() {
         setIsPortrait(portrait);
         const A5_W = portrait ? 1748 : 2480;
         const A5_H = portrait ? 2480 : 1748;
-        const MARGIN = 177;
-        const INNER_W = A5_W - (MARGIN * 2);
-        const INNER_H = A5_H - (MARGIN * 2);
+        const MARGIN_X = Math.round(1.2 * 300 / 2.54); // 142
+        const MARGIN_Y = Math.round(1.1 * 300 / 2.54); // 130
+        const INNER_W = A5_W - (MARGIN_X * 2);
+        const INNER_H = A5_H - (MARGIN_Y * 2);
         
         const canvas = document.createElement('canvas');
         canvas.width = A5_W;
@@ -338,7 +339,7 @@ export default function App() {
             sy = (img.height - sHeight) / 2;
         }
         
-        ctx.drawImage(img, sx, sy, sWidth, sHeight, MARGIN, MARGIN, INNER_W, INNER_H);
+        ctx.drawImage(img, sx, sy, sWidth, sHeight, MARGIN_X, MARGIN_Y, INNER_W, INNER_H);
         
         setCustomPhoto(canvas.toDataURL('image/jpeg', 0.95));
         showToast('Foto berhasil diunggah dengan proporsi A5!');
@@ -385,12 +386,19 @@ export default function App() {
     showToast('Sedang mengirim pesanan ke Cloud...');
     
     const themeIndex = themes.findIndex(t => t.name === activeTheme) + 1;
-    const uploadRes = await saveOrderToFirebase(guidePhoto, lineartPhoto, themeIndex);
+    
+    // Extract code from URL path
+    const path = window.location.pathname;
+    const urlCode = path !== '/' && !path.startsWith('/unduh/') ? path.split('/').filter(Boolean)[0] : undefined;
+
+    const uploadRes = await saveOrderToFirebase(guidePhoto, lineartPhoto, themeIndex, urlCode);
     
     setIsConfirming(false);
     if (uploadRes.success) {
       setOrderCode(uploadRes.orderCode!);
-      setShowOrderModal(true);
+      if (!urlCode) {
+        setShowOrderModal(true);
+      }
       showToast('Berhasil dikonfirmasi!');
     } else {
       showToast(`Gagal: ${uploadRes.error}`);
@@ -693,7 +701,7 @@ export default function App() {
         {/* ===== BOTTOM: Paste & Download Button (floating inside photo) ===== */}
         <div className={`absolute bottom-0 left-0 right-0 z-[100] p-3 sm:p-4 pb-[calc(10px+env(safe-area-inset-bottom,0px))] transition-all duration-300 ${(btnState === 'done') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
           <div className="flex flex-col gap-2 pointer-events-auto">
-            {btnState === 'done' && !orderCode && !window.location.pathname.startsWith('/unduh/') && (
+            {btnState === 'done' && !orderCode && window.location.pathname !== '/' && !window.location.pathname.startsWith('/unduh/') && (
               <button
                 onClick={handleConfirmOrder}
                 disabled={isConfirming}
@@ -703,13 +711,20 @@ export default function App() {
                 {isConfirming ? 'Mengirim Pesanan...' : 'Konfirmasi Pesanan'}
               </button>
             )}
-            {btnState === 'done' && orderCode && !window.location.pathname.startsWith('/unduh/') && (
+            {btnState === 'done' && orderCode && window.location.pathname === '/' && (
               <button
                 onClick={() => setShowOrderModal(true)}
                 className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#5A3D2B] to-[#3E271D] shadow-none hover:brightness-110"
               >
                 Lihat Kode Pesanan
               </button>
+            )}
+            {btnState === 'done' && orderCode && window.location.pathname !== '/' && !window.location.pathname.startsWith('/unduh/') && (
+              <div
+                className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-default overflow-hidden backdrop-blur-sm bg-gradient-to-br  from-[#5A3D2B] to-[#3E271D] shadow-none"
+              >
+                Pesanan Berhasil Disimpan
+              </div>
             )}
             {btnState === 'done' && window.location.pathname.startsWith('/unduh/') && (
               <div className="flex gap-2 w-full">
