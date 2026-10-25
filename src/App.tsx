@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { processImageToLineart } from './lib/image-processor';
-import { User, Camera, Moon, Sunset, Coffee, Flower2, ImagePlus, Brush, Eraser, Download, Loader2, PaintBucket, Hand, ZoomIn, ZoomOut, Undo2, Redo2, Copy } from 'lucide-react';
+import { User, Camera, Moon, Sunset, Coffee, Flower2, ImagePlus, Brush, Eraser, Download, Loader2, PaintBucket, Hand, ZoomIn, ZoomOut, Undo2, Redo2, Copy, X, Check } from 'lucide-react';
 import Frame3D from './Frame3D';
 import GuideCard from './GuideCard';
 
@@ -13,7 +13,7 @@ const themes = [
   { name: 'Sakura', icon: Flower2, bg: 'linear-gradient(135deg,#9E6775,#663744)', colors: [[43, 19, 26], [115, 52, 69], [184, 108, 123], [227, 163, 175], [250, 212, 220], [255, 245, 247]] },
 ];
 
-import { saveOrderToFirebase, getOrderFromFirebase } from './lib/firebase';
+import { saveOrderToSupabase, getOrderFromSupabase, checkOrderExistsInSupabase } from './lib/supabase';
 
 export default function App() {
   const [activeTheme, setActiveTheme] = useState('Natural');
@@ -23,7 +23,9 @@ export default function App() {
   const [guidePhoto, setGuidePhoto] = useState<string | null>(null);
   const [lineartPhoto, setLineartPhoto] = useState<string | null>(null);
   const [orderCode, setOrderCode] = useState<string | null>(null);
+  const [orderAlreadyExists, setOrderAlreadyExists] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
 
   const [isBrushing, setIsBrushing] = useState(false);
@@ -47,6 +49,13 @@ export default function App() {
     }
   };
 
+  const getUrlOrderId = () => {
+    const path = window.location.pathname;
+    if (!path || path === '/' || path.startsWith('/unduh/')) return null;
+    const segment = path.split('/').filter(Boolean)[0];
+    return segment ? decodeURIComponent(segment) : null;
+  };
+
   const [toastMsg, setToastMsg] = useState('');
   const [showToastObj, setShowToastObj] = useState(false);
   const toastTimer = useRef<number | null>(null);
@@ -67,6 +76,16 @@ export default function App() {
       if (code && code.length > 0) {
         loadOrder(code);
       }
+    } else {
+      const urlId = getUrlOrderId();
+      if (urlId) {
+        checkOrderExistsInSupabase(urlId).then((exists) => {
+          if (exists) {
+            setOrderAlreadyExists(true);
+            showToast('ID Pesanan ini sudah terdaftar di database.');
+          }
+        });
+      }
     }
   }, []);
 
@@ -75,7 +94,7 @@ export default function App() {
     setLoadingText('Mencari pesanan...');
     setLoadingPct(30);
 
-    const res = await getOrderFromFirebase(code.toUpperCase());
+    const res = await getOrderFromSupabase(code.toUpperCase());
     if (res.success && res.data) {
       const fixUrl = (url?: string) => {
         if (!url) return null;
@@ -390,14 +409,25 @@ export default function App() {
     const themeIndex = themes.findIndex(t => t.name === activeTheme) + 1;
     
     // Extract code from URL path
-    const path = window.location.pathname;
-    const urlCode = path !== '/' && !path.startsWith('/unduh/') ? path.split('/').filter(Boolean)[0] : undefined;
+    const urlCode = getUrlOrderId() || undefined;
 
-    const uploadRes = await saveOrderToFirebase(guidePhoto, lineartPhoto, themeIndex, urlCode);
+    if (urlCode) {
+      const exists = await checkOrderExistsInSupabase(urlCode);
+      if (exists) {
+        setOrderAlreadyExists(true);
+        setShowConfirmModal(false);
+        setIsConfirming(false);
+        showToast('Gagal: ID Pesanan ini sudah pernah dikonfirmasi!');
+        return;
+      }
+    }
+
+    const uploadRes = await saveOrderToSupabase(guidePhoto, lineartPhoto, themeIndex, urlCode);
     
     setIsConfirming(false);
     if (uploadRes.success) {
       setOrderCode(uploadRes.orderCode!);
+      setShowConfirmModal(false);
       if (!urlCode) {
         setShowOrderModal(true);
       }
@@ -711,27 +741,25 @@ export default function App() {
         {/* ===== BOTTOM: Paste & Download Button (floating inside photo) ===== */}
         <div className={`absolute bottom-0 left-0 right-0 z-[100] p-3 sm:p-4 pb-[calc(10px+env(safe-area-inset-bottom,0px))] transition-all duration-300 ${(btnState === 'done') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
           <div className="flex flex-col gap-2 pointer-events-auto">
-            {btnState === 'done' && !orderCode && window.location.pathname !== '/' && !window.location.pathname.startsWith('/unduh/') && (
+            {btnState === 'done' && !orderCode && Boolean(getUrlOrderId()) && !orderAlreadyExists && (
               <button
-                onClick={handleConfirmOrder}
-                disabled={isConfirming}
-                className={`relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#5A3D2B] to-[#3E271D] shadow-none hover:brightness-110 ${isConfirming ? 'opacity-70 pointer-events-none' : ''}`}
-              >
-                {isConfirming ? <Loader2 className="w-5 h-5 animate-spin" /> : <PaintBucket size={18} strokeWidth={2.5} />}
-                {isConfirming ? 'Mengirim Pesanan...' : 'Konfirmasi Pesanan'}
-              </button>
-            )}
-            {btnState === 'done' && orderCode && window.location.pathname === '/' && (
-              <button
-                onClick={() => setShowOrderModal(true)}
+                onClick={() => setShowConfirmModal(true)}
                 className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-pointer overflow-hidden transition-all duration-200 active:translate-y-[1px] backdrop-blur-sm bg-gradient-to-br from-[#5A3D2B] to-[#3E271D] shadow-none hover:brightness-110"
               >
-                Lihat Kode Pesanan
+                <PaintBucket size={18} strokeWidth={2.5} />
+                Konfirmasi Pesanan
               </button>
             )}
-            {btnState === 'done' && orderCode && window.location.pathname !== '/' && !window.location.pathname.startsWith('/unduh/') && (
+            {btnState === 'done' && Boolean(getUrlOrderId()) && orderAlreadyExists && (
               <div
-                className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-default overflow-hidden backdrop-blur-sm bg-gradient-to-br  from-[#5A3D2B] to-[#3E271D] shadow-none"
+                className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-default overflow-hidden backdrop-blur-sm bg-gradient-to-br from-[#5A3D2B] to-[#3E271D] shadow-none text-center"
+              >
+                Pesanan Ini Sudah Terdaftar
+              </div>
+            )}
+            {btnState === 'done' && orderCode && Boolean(getUrlOrderId()) && !orderAlreadyExists && (
+              <div
+                className="relative w-full rounded-xl py-3 px-5 text-white font-baloo font-bold text-sm sm:text-base flex items-center justify-center gap-2 cursor-default overflow-hidden backdrop-blur-sm bg-gradient-to-br from-[#5A3D2B] to-[#3E271D] shadow-none"
               >
                 Pesanan Berhasil Disimpan
               </div>
@@ -764,6 +792,101 @@ export default function App() {
       </div>
 
       </div>
+
+      {/* ===== Order Confirmation Modal ===== */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="bg-[#2E1D13] border border-[#A67B5B] rounded-2xl p-5 sm:p-6 max-w-sm sm:max-w-md w-full flex flex-col shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#A67B5B]/20 flex items-center justify-center text-[#D2B48C]">
+                  <PaintBucket size={18} />
+                </div>
+                <h2 className="text-lg sm:text-xl font-baloo font-bold text-white">Konfirmasi Pesanan</h2>
+              </div>
+              <button 
+                onClick={() => !isConfirming && setShowConfirmModal(false)}
+                className="text-white/50 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                disabled={isConfirming}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Subtitle */}
+            <p className="text-xs sm:text-sm text-white/70 mb-3">
+              Apakah kamu yakin ingin mengonfirmasi pesanan ini? Pastikan gambar dan palet warna sudah sesuai.
+            </p>
+
+            {/* Preview (Guide Photo only) */}
+            <div className="w-full mb-3.5 flex flex-col items-center">
+              <div className="w-full max-w-[240px] max-h-[220px] rounded-xl overflow-hidden bg-black/60 flex items-center justify-center border border-white/10 p-1">
+                {guidePhoto ? (
+                  <img src={guidePhoto} alt="Panduan Warna" className="max-h-[210px] w-auto object-contain rounded-lg" />
+                ) : (
+                  <span className="text-xs text-white/40 py-8">Tidak ada gambar</span>
+                )}
+              </div>
+            </div>
+
+            {/* ID Pesanan */}
+            {getUrlOrderId() && (
+              <div className="bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 mb-3 flex items-center justify-between">
+                <span className="text-[11px] text-white/60">ID Pesanan</span>
+                <span className="font-mono font-bold text-sm text-[#FFE3D0]">{getUrlOrderId()}</span>
+              </div>
+            )}
+
+            {/* Palette Info */}
+            <div className="bg-black/40 border border-white/10 rounded-xl p-3 mb-4 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] text-white/60 block">Tema Palet</span>
+                <span className="font-baloo font-bold text-sm text-[#FFE3D0]">{activeTheme}</span>
+              </div>
+              <div className="flex gap-1.5">
+                {themes.find(t => t.name === activeTheme)?.colors.map((c, i) => (
+                  <div 
+                    key={i} 
+                    className="w-4 h-4 rounded-full border border-black/50 shadow-sm"
+                    style={{ backgroundColor: `rgb(${c[0]}, ${c[1]}, ${c[2]})` }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2.5 w-full">
+              <button 
+                type="button"
+                onClick={() => setShowConfirmModal(false)}
+                disabled={isConfirming}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-white/20 text-white/80 hover:bg-white/10 font-baloo font-bold text-sm transition-all cursor-pointer disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button 
+                type="button"
+                onClick={handleConfirmOrder}
+                disabled={isConfirming}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-br from-[#A67B5B] to-[#704835] hover:brightness-110 active:scale-95 text-white font-baloo font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg disabled:opacity-60"
+              >
+                {isConfirming ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Mengirim...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} strokeWidth={2.5} />
+                    <span>Ya, Konfirmasi</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ===== Order Success Modal ===== */}
       {showOrderModal && (
